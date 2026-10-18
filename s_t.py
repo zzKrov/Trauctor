@@ -20,73 +20,25 @@ st.set_page_config(
 )
 
 # ============================================================
-# ATMÓSFERA VISUAL: GRADIENTES VIOLETA Y SUPRESIÓN DEL BOTÓN BLANCO
+# ATMÓSFERA VISUAL: GRADIENTES VIOLETA Y BOTÓN DE VOZ SATINADO
 # ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+html, body, [class*="css"], [data-testid="stAppViewContainer"], .stApp, section.main {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
-    background-color: #080414 !important;
+    background: transparent !important;
+    background-color: transparent !important;
     color: #f5f5ff !important;
     overflow-x: hidden;
 }
 
 [data-testid="stHeader"] { background: transparent !important; }
 
-/* 1. Gradiente multicolor animado */
-.stApp {
-    background: linear-gradient(135deg, #080414 0%, #170729 30%, #250630 60%, #0a0316 100%) !important;
-    background-size: 300% 300% !important;
-    animation: purpleWave 18s ease infinite alternate !important;
-}
-
-@keyframes purpleWave {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* 2. Esferas orgánicas fluidas de luz */
-.fluid-violet-blob-1 {
-    position: fixed;
-    top: 15%;
-    left: -120px;
-    width: 520px;
-    height: 520px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.16) 0%, rgba(236, 72, 153, 0.04) 55%, transparent 75%);
-    border-radius: 40% 60% 70% 30% / 50% 60% 40% 50%;
-    filter: blur(85px);
-    animation: violetDrift1 20s infinite alternate ease-in-out;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.fluid-violet-blob-2 {
-    position: fixed;
-    bottom: 5%;
-    right: -100px;
-    width: 560px;
-    height: 560px;
-    background: radial-gradient(circle, rgba(236, 72, 153, 0.14) 0%, rgba(168, 85, 247, 0.03) 55%, transparent 75%);
-    border-radius: 60% 40% 50% 50% / 40% 50% 60% 50%;
-    filter: blur(90px);
-    animation: violetDrift2 24s infinite alternate ease-in-out;
-    pointer-events: none;
-    z-index: 0;
-}
-
-@keyframes violetDrift1 {
-    0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(120px, 70px) scale(1.15); }
-    100% { transform: translate(40px, 150px) scale(0.95); }
-}
-
-@keyframes violetDrift2 {
-    0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-110px, -80px) scale(1.2); }
-    100% { transform: translate(-30px, -130px) scale(0.9); }
+/* Eliminación total de cualquier sidebar remanente */
+[data-testid="stSidebar"], section[data-testid="stSidebar"] {
+    display: none !important;
 }
 
 .brand-signature {
@@ -105,7 +57,7 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
     text-align: center;
     color: #ffffff;
     margin-bottom: 0.2rem;
-    text-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+    text-shadow: 0 0 25px rgba(168, 85, 247, 0.45);
 }
 
 .sub-lead {
@@ -115,7 +67,7 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {
     margin-bottom: 1.8rem;
 }
 
-/* SUPRESIÓN COMPLETA DEL FONDO BLANCO DE BOKEH */
+/* SUPRESIÓN DEL RECUADRO BLANCO DE BOKEH */
 iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
     background: transparent !important;
     border: none !important;
@@ -126,12 +78,13 @@ iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
 .recording-badge-box {
     text-align: center;
     margin: 10px auto 16px auto;
-    padding: 12px 20px;
+    padding: 12px 24px;
     background: rgba(124, 58, 237, 0.12);
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    border: 1px solid rgba(168, 85, 247, 0.35);
     border-radius: 30px;
     width: fit-content;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
 .soundwave-bar {
@@ -162,74 +115,113 @@ iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
     margin: 1rem 0;
     font-size: 1.05rem;
     color: #ffffff;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
 }
 </style>
-
-<div class="fluid-violet-blob-1"></div>
-<div class="fluid-violet-blob-2"></div>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# ESTELA DE RATÓN REACTIVA
+# LÁMPARA DE LAVA FLUIDA AMATISTA EN CANVAS
 # ---------------------------------------------------------
 components.html(
     """
     <script>
     (function() {
         const doc = window.parent.document;
-        if (!doc.getElementById('voice-sparkles-canvas')) {
-            const canvas = doc.createElement('canvas');
-            canvas.id = 'voice-sparkles-canvas';
-            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1;opacity:0.65;';
+        let canvas = doc.getElementById('voice-lava-canvas');
+        if (!canvas) {
+            canvas = doc.createElement('canvas');
+            canvas.id = 'voice-lava-canvas';
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;background:#080414;';
             doc.body.prepend(canvas);
-
-            const ctx = canvas.getContext('2d');
-            let w = canvas.width = window.parent.innerWidth;
-            let h = canvas.height = window.parent.innerHeight;
-
-            window.parent.addEventListener('resize', () => {
-                w = canvas.width = window.parent.innerWidth;
-                h = canvas.height = window.parent.innerHeight;
-            });
-
-            const particles = [];
-            window.parent.addEventListener('mousemove', (e) => {
-                for (let i = 0; i < 2; i++) {
-                    particles.push({
-                        x: e.clientX,
-                        y: e.clientY,
-                        r: Math.random() * 2 + 0.8,
-                        vx: (Math.random() - 0.5) * 1.4,
-                        vy: (Math.random() - 0.5) * 1.4,
-                        alpha: 1.0
-                    });
-                }
-            });
-
-            function loop() {
-                ctx.clearRect(0, 0, w, h);
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    const p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.alpha -= 0.025;
-                    if (p.alpha <= 0) {
-                        particles.splice(i, 1);
-                        continue;
-                    }
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`;
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = '#ec4899';
-                    ctx.fill();
-                }
-                requestAnimationFrame(loop);
-            }
-            loop();
         }
+
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = window.parent.innerWidth;
+        let h = canvas.height = window.parent.innerHeight;
+
+        window.parent.addEventListener('resize', () => {
+            w = canvas.width = window.parent.innerWidth;
+            h = canvas.height = window.parent.innerHeight;
+        });
+
+        // Fluidos orgánicos violeta y magenta
+        const blobs = [
+            { x: w * 0.2, y: h * 0.25, r: 260, vx: 0.5, vy: 0.4, color: 'rgba(168, 85, 247, 0.16)' },
+            { x: w * 0.75, y: h * 0.35, r: 290, vx: -0.4, vy: 0.5, color: 'rgba(236, 72, 153, 0.15)' },
+            { x: w * 0.35, y: h * 0.75, r: 270, vx: 0.4, vy: -0.5, color: 'rgba(124, 58, 237, 0.14)' },
+            { x: w * 0.8, y: h * 0.8, r: 240, vx: -0.5, vy: -0.4, color: 'rgba(219, 39, 119, 0.12)' }
+        ];
+
+        let mouse = { x: -1000, y: -1000 };
+        const sparkles = [];
+
+        window.parent.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            for (let i = 0; i < 2; i++) {
+                sparkles.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    r: Math.random() * 2 + 0.8,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5,
+                    alpha: 1.0
+                });
+            }
+        });
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#080414';
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalCompositeOperation = 'screen';
+
+            for (let b of blobs) {
+                b.x += b.vx;
+                b.y += b.vy;
+
+                if (b.x < -100 || b.x > w + 100) b.vx *= -1;
+                if (b.y < -100 || b.y > h + 100) b.vy *= -1;
+
+                const dm = Math.hypot(b.x - mouse.x, b.y - mouse.y);
+                if (dm < 280) {
+                    b.x += (mouse.x - b.x) * 0.008;
+                    b.y += (mouse.y - b.y) * 0.008;
+                }
+
+                const grad = ctx.createRadialGradient(b.x, b.y, b.r * 0.05, b.x, b.y, b.r);
+                grad.addColorStop(0, b.color);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+
+            for (let i = sparkles.length - 1; i >= 0; i--) {
+                const s = sparkles[i];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.alpha -= 0.025;
+                if (s.alpha <= 0) {
+                    sparkles.splice(i, 1);
+                    continue;
+                }
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(236, 72, 153, ${s.alpha})`;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ec4899';
+                ctx.fill();
+            }
+
+            ctx.globalCompositeOperation = 'source-over';
+            requestAnimationFrame(animate);
+        }
+        animate();
     })();
     </script>
     """,
@@ -245,7 +237,7 @@ st.markdown('<div class="main-title">Traductor de Voz a Audio</div>', unsafe_all
 st.markdown('<div class="sub-lead">Reconocimiento oral continuo, traducción multilingüe y síntesis vocal en tiempo real</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# BOTÓN REDONDEADO INTERACTIVO CON CAMBIO DE ESTADO
+# BOTÓN REDONDEADO INTERACTIVO CON MUTACIÓN DE ESTADOS
 # ------------------------------------------------------------
 st.markdown(
     """
@@ -271,7 +263,6 @@ stt_button = Button(
     height=54
 )
 
-# Inyección de estilos y eventos en tiempo real dentro del botón
 stt_button.js_on_event(
     "button_click",
     CustomJS(code="""
@@ -280,7 +271,6 @@ stt_button.js_on_event(
             return;
         }
 
-        // Estilización dinámica inmediata al hacer clic
         var btnEl = document.querySelector('.bk-btn');
         if (btnEl) {
             btnEl.innerText = "🔴 Escuchando... Habla ahora";
@@ -327,7 +317,7 @@ stt_button.js_on_event(
     """)
 )
 
-# Inyección de hoja de estilos directa dentro del iframe de Bokeh
+# Inyección permanente que erradica el fondo blanco dentro del iframe de Bokeh
 components.html(
     """
     <script>
@@ -336,11 +326,11 @@ components.html(
         iframes.forEach(f => {
             try {
                 const doc = f.contentDocument || f.contentWindow.document;
-                if (doc && doc.querySelector('.bk-btn') && !doc.getElementById('krov-bokeh-fix')) {
+                if (doc && doc.querySelector('.bk-btn') && !doc.getElementById('krov-bokeh-fix-final')) {
                     doc.body.style.background = 'transparent';
                     doc.documentElement.style.background = 'transparent';
                     const style = doc.createElement('style');
-                    style.id = 'krov-bokeh-fix';
+                    style.id = 'krov-bokeh-fix-final';
                     style.innerHTML = `
                         html, body { background: transparent !important; margin: 0 !important; overflow: hidden !important; }
                         .bk-root { background: transparent !important; display: flex !important; justify-content: center !important; }
@@ -353,7 +343,7 @@ components.html(
                             font-weight: 700 !important;
                             font-size: 1rem !important;
                             letter-spacing: 0.04em !important;
-                            padding: 12px 30px !important;
+                            padding: 12px 32px !important;
                             box-shadow: 0 0 30px rgba(168, 85, 247, 0.5) !important;
                             cursor: pointer !important;
                             transition: all 0.3s ease !important;
@@ -378,7 +368,7 @@ components.html(
 result = streamlit_bokeh_events(
     stt_button,
     events="GET_TEXT",
-    key="listen",
+    key="listen_final",
     refresh_on_update=False,
     override_height=75,
     debounce_time=0
@@ -388,7 +378,7 @@ if result and "GET_TEXT" in result:
     st.session_state["captured_text"] = str(result.get("GET_TEXT"))
 
 # ------------------------------------------------------------
-# PANEL INTEGRADO DE TRADUCCIÓN Y REPRODUCCIÓN (SIN SIDEBAR)
+# PANEL INTEGRADO EN PANTALLA PANORÁMICA (SIN SIDEBAR)
 # ------------------------------------------------------------
 c_left, c_right = st.columns([1.1, 1], gap="large")
 
