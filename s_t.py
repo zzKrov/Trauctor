@@ -10,42 +10,46 @@ from gtts import gTTS
 from googletrans import Translator
 
 # ============================================================
-# CONFIGURACIÓN GENERAL
+# CONFIGURACIÓN GENERAL (SIN BARRA LATERAL)
 # ============================================================
 st.set_page_config(
     page_title="Traductor de Voz // Krov Industries",
     page_icon="🎤",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ============================================================
-# LÍNEA BASE VISUAL: GRADIENTES VIOLETA, FLUIDOS Y BOKEH MODERNO
+# ATMÓSFERA VISUAL: GRADIENTES VIOLETA Y SUPRESIÓN DEL BOTÓN BLANCO
 # ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    background-color: #080414 !important;
+    color: #f5f5ff !important;
+    overflow-x: hidden;
 }
 
-/* 1. Fondo de gradiente multicolor animado */
+[data-testid="stHeader"] { background: transparent !important; }
+
+/* 1. Gradiente multicolor animado */
 .stApp {
-    background: linear-gradient(135deg, #080414 0%, #150826 30%, #20072b 60%, #0a0416 100%) !important;
+    background: linear-gradient(135deg, #080414 0%, #170729 30%, #250630 60%, #0a0316 100%) !important;
     background-size: 300% 300% !important;
-    animation: purpleGradient 18s ease infinite alternate !important;
-    color: #f5f5ff;
+    animation: purpleWave 18s ease infinite alternate !important;
 }
 
-@keyframes purpleGradient {
+@keyframes purpleWave {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-/* 2. Esferas orgánicas de plasma ultravioleta */
-.fluid-violet-1 {
+/* 2. Esferas orgánicas fluidas de luz */
+.fluid-violet-blob-1 {
     position: fixed;
     top: 15%;
     left: -120px;
@@ -59,7 +63,7 @@ html, body, [class*="css"] {
     z-index: 0;
 }
 
-.fluid-violet-2 {
+.fluid-violet-blob-2 {
     position: fixed;
     bottom: 5%;
     right: -100px;
@@ -95,16 +99,23 @@ html, body, [class*="css"] {
     margin-bottom: 4px;
 }
 
-h1 {
-    font-size: 2.3rem !important;
-    font-weight: 700 !important;
+.main-title {
+    font-size: 2.2rem;
+    font-weight: 700;
     text-align: center;
-    color: #ffffff !important;
-    margin-bottom: 0.2rem !important;
+    color: #ffffff;
+    margin-bottom: 0.2rem;
     text-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
 }
 
-/* Supresión total del recuadro blanco de Bokeh */
+.sub-lead {
+    text-align: center;
+    color: #c4b5fd;
+    font-size: 0.95rem;
+    margin-bottom: 1.8rem;
+}
+
+/* SUPRESIÓN COMPLETA DEL FONDO BLANCO DE BOKEH */
 iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
     background: transparent !important;
     border: none !important;
@@ -112,36 +123,14 @@ iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
     margin: 0 auto !important;
 }
 
-.bk-root {
-    background: transparent !important;
-}
-
-.bk-root .bk-btn, .bk-root .bk-btn-default {
-    background: linear-gradient(135deg, #7c3aed, #ec4899) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(236, 72, 153, 0.6) !important;
-    border-radius: 28px !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    letter-spacing: 0.05em !important;
-    box-shadow: 0 0 25px rgba(168, 85, 247, 0.45) !important;
-    transition: all 0.25s ease !important;
-}
-
-.bk-root .bk-btn:hover {
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: 0 0 35px rgba(236, 72, 153, 0.65) !important;
-}
-
-.recording-status-box {
+.recording-badge-box {
     text-align: center;
     margin: 10px auto 16px auto;
-    padding: 12px;
+    padding: 12px 20px;
     background: rgba(124, 58, 237, 0.12);
     border: 1px solid rgba(168, 85, 247, 0.3);
-    border-radius: 8px;
-    max-width: 520px;
+    border-radius: 30px;
+    width: fit-content;
     backdrop-filter: blur(10px);
 }
 
@@ -164,7 +153,7 @@ iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
     100% { transform: scaleY(1.2); }
 }
 
-.trans-result-card {
+.trans-card {
     background: rgba(15, 10, 40, 0.85);
     border: 1px solid rgba(168, 85, 247, 0.3);
     border-left: 4px solid #a855f7;
@@ -178,79 +167,70 @@ iframe[title="streamlit_bokeh_events.streamlit_bokeh_events"] {
 }
 </style>
 
-<div class="fluid-violet-1"></div>
-<div class="fluid-violet-2"></div>
+<div class="fluid-violet-blob-1"></div>
+<div class="fluid-violet-blob-2"></div>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PARTÍCULAS ACÚSTICAS Y ESTELA DE MOUSE
+# ESTELA DE RATÓN REACTIVA
 # ---------------------------------------------------------
 components.html(
     """
     <script>
-    const pDoc = window.parent.document;
-    if (!pDoc.getElementById('sound-particles-canvas')) {
-        const canvas = pDoc.createElement('canvas');
-        canvas.id = 'sound-particles-canvas';
-        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1;opacity:0.6;';
-        pDoc.body.prepend(canvas);
+    (function() {
+        const doc = window.parent.document;
+        if (!doc.getElementById('voice-sparkles-canvas')) {
+            const canvas = doc.createElement('canvas');
+            canvas.id = 'voice-sparkles-canvas';
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1;opacity:0.65;';
+            doc.body.prepend(canvas);
 
-        const ctx = canvas.getContext('2d');
-        let w = canvas.width = window.parent.innerWidth;
-        let h = canvas.height = window.parent.innerHeight;
+            const ctx = canvas.getContext('2d');
+            let w = canvas.width = window.parent.innerWidth;
+            let h = canvas.height = window.parent.innerHeight;
 
-        window.parent.addEventListener('resize', () => {
-            w = canvas.width = window.parent.innerWidth;
-            h = canvas.height = window.parent.innerHeight;
-        });
-
-        const particles = [];
-        for (let i = 0; i < 40; i++) {
-            particles.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                r: Math.random() * 2.2 + 0.8,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4 - 0.3,
-                alpha: Math.random() * 0.7 + 0.3
+            window.parent.addEventListener('resize', () => {
+                w = canvas.width = window.parent.innerWidth;
+                h = canvas.height = window.parent.innerHeight;
             });
-        }
 
-        let mouse = { x: -1000, y: -1000 };
-        window.parent.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-        });
-
-        function render() {
-            ctx.clearRect(0, 0, w, h);
-            for (let i = 0; i < particles.length; i++) {
-                const p = particles[i];
-                p.x += p.vx; p.y += p.vy;
-                if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
-                if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = '#ec4899';
-                ctx.fill();
-
-                const d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
-                if (d < 110) {
-                    ctx.beginPath();
-                    ctx.moveTo(p.x, p.y);
-                    ctx.lineTo(mouse.x, mouse.y);
-                    ctx.strokeStyle = `rgba(236, 72, 153, ${0.45 * (1 - d / 110)})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.stroke();
+            const particles = [];
+            window.parent.addEventListener('mousemove', (e) => {
+                for (let i = 0; i < 2; i++) {
+                    particles.push({
+                        x: e.clientX,
+                        y: e.clientY,
+                        r: Math.random() * 2 + 0.8,
+                        vx: (Math.random() - 0.5) * 1.4,
+                        vy: (Math.random() - 0.5) * 1.4,
+                        alpha: 1.0
+                    });
                 }
+            });
+
+            function loop() {
+                ctx.clearRect(0, 0, w, h);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.alpha -= 0.025;
+                    if (p.alpha <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = '#ec4899';
+                    ctx.fill();
+                }
+                requestAnimationFrame(loop);
             }
-            requestAnimationFrame(render);
+            loop();
         }
-        render();
-    }
+    })();
     </script>
     """,
     height=0,
@@ -261,28 +241,24 @@ components.html(
 # ENCABEZADO
 # ============================================================
 st.markdown('<div class="brand-signature">Krov Industries · Procesamiento Acústico</div>', unsafe_allow_html=True)
-st.title("Traductor de Voz a Audio")
-st.markdown("<p style='text-align:center; color:#c4b5fd; font-size:0.95rem; margin-bottom:1.5rem;'>Reconocimiento oral continuo, traducción multilingüe y síntesis vocal</p>", unsafe_allow_html=True)
+st.markdown('<div class="main-title">Traductor de Voz a Audio</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-lead">Reconocimiento oral continuo, traducción multilingüe y síntesis vocal en tiempo real</div>', unsafe_allow_html=True)
 
-with st.sidebar:
-    st.subheader("Instrucciones")
-    st.write(
-        "1. Haz clic en el botón de escucha y autoriza el micrófono en el navegador.\n"
-        "2. Pronuncia con claridad la frase deseada.\n"
-        "3. Elige los idiomas de entrada y salida.\n"
-        "4. Presiona «Convertir y reproducir audio» para generar la voz traducida."
-    )
-
+# ------------------------------------------------------------
+# BOTÓN REDONDEADO INTERACTIVO CON CAMBIO DE ESTADO
+# ------------------------------------------------------------
 st.markdown(
     """
-    <div class="recording-status-box">
+    <div class="recording-badge-box">
         <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
             <div class="soundwave-bar"></div>
             <div class="soundwave-bar"></div>
             <div class="soundwave-bar"></div>
             <div class="soundwave-bar"></div>
             <div class="soundwave-bar"></div>
-            <span style="font-family:'JetBrains Mono'; font-size:0.82rem; color:#e9d5ff; margin-left:8px;">MICRÓFONO LISTO // PULSA EL BOTÓN INFERIOR</span>
+            <span style="font-family:'JetBrains Mono'; font-size:0.82rem; color:#e9d5ff; margin-left:8px;">
+                CANAL DE AUDIO LISTO // PULSA EL BOTÓN INFERIOR
+            </span>
         </div>
     </div>
     """,
@@ -290,27 +266,34 @@ st.markdown(
 )
 
 stt_button = Button(
-    label="Escuchar voz 🎤",
+    label="Iniciar grabación de voz 🎤",
     width=340,
-    height=52
+    height=54
 )
 
+# Inyección de estilos y eventos en tiempo real dentro del botón
 stt_button.js_on_event(
     "button_click",
     CustomJS(code="""
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('El reconocimiento de voz no está soportado en este navegador. Utiliza Google Chrome o Edge.');
+            alert('El reconocimiento de voz no está soportado en este navegador. Utiliza Google Chrome o Microsoft Edge.');
             return;
         }
+
+        // Estilización dinámica inmediata al hacer clic
+        var btnEl = document.querySelector('.bk-btn');
+        if (btnEl) {
+            btnEl.innerText = "🔴 Escuchando... Habla ahora";
+            btnEl.style.background = "linear-gradient(135deg, #f43f5e 0%, #be123c 100%)";
+            btnEl.style.boxShadow = "0 0 35px rgba(244, 63, 94, 0.9)";
+            btnEl.style.borderColor = "#f43f5e";
+        }
+
         var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         var recognition = new SpeechRec();
         recognition.continuous = false;
         recognition.interimResults = true;
         recognition.lang = 'es-ES';
-
-        recognition.onstart = function() {
-            console.log('Captura de voz iniciada');
-        };
 
         recognition.onresult = function (e) {
             var value = "";
@@ -320,16 +303,76 @@ stt_button.js_on_event(
                 }
             }
             if (value != "") {
+                if (btnEl) {
+                    btnEl.innerText = "✨ Transcripción completada";
+                    btnEl.style.background = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
+                    btnEl.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.7)";
+                    btnEl.style.borderColor = "#10b981";
+                }
                 document.dispatchEvent(new CustomEvent("GET_TEXT", {detail: value}));
             }
         };
 
         recognition.onerror = function(event) {
             console.error('Error de micrófono:', event.error);
+            if (btnEl) {
+                btnEl.innerText = "⚠️ Error de micrófono - Reintentar";
+                btnEl.style.background = "linear-gradient(135deg, #d97706 0%, #b45309 100%)";
+                btnEl.style.boxShadow = "0 0 25px rgba(217, 119, 6, 0.7)";
+                btnEl.style.borderColor = "#d97706";
+            }
         };
 
         recognition.start();
     """)
+)
+
+# Inyección de hoja de estilos directa dentro del iframe de Bokeh
+components.html(
+    """
+    <script>
+    setInterval(() => {
+        const iframes = window.parent.document.querySelectorAll('iframe');
+        iframes.forEach(f => {
+            try {
+                const doc = f.contentDocument || f.contentWindow.document;
+                if (doc && doc.querySelector('.bk-btn') && !doc.getElementById('krov-bokeh-fix')) {
+                    doc.body.style.background = 'transparent';
+                    doc.documentElement.style.background = 'transparent';
+                    const style = doc.createElement('style');
+                    style.id = 'krov-bokeh-fix';
+                    style.innerHTML = `
+                        html, body { background: transparent !important; margin: 0 !important; overflow: hidden !important; }
+                        .bk-root { background: transparent !important; display: flex !important; justify-content: center !important; }
+                        .bk-btn, .bk-btn-default {
+                            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%) !important;
+                            color: #ffffff !important;
+                            border: 2px solid rgba(236, 72, 153, 0.7) !important;
+                            border-radius: 9999px !important;
+                            font-family: 'Plus Jakarta Sans', sans-serif !important;
+                            font-weight: 700 !important;
+                            font-size: 1rem !important;
+                            letter-spacing: 0.04em !important;
+                            padding: 12px 30px !important;
+                            box-shadow: 0 0 30px rgba(168, 85, 247, 0.5) !important;
+                            cursor: pointer !important;
+                            transition: all 0.3s ease !important;
+                            outline: none !important;
+                        }
+                        .bk-btn:hover {
+                            transform: translateY(-2px) scale(1.02) !important;
+                            box-shadow: 0 0 45px rgba(236, 72, 153, 0.8) !important;
+                        }
+                    `;
+                    doc.head.appendChild(style);
+                }
+            } catch(e) {}
+        });
+    }, 150);
+    </script>
+    """,
+    height=0,
+    width=0
 )
 
 result = streamlit_bokeh_events(
@@ -342,33 +385,42 @@ result = streamlit_bokeh_events(
 )
 
 if result and "GET_TEXT" in result:
-    st.session_state["recognized_voice_text"] = str(result.get("GET_TEXT"))
+    st.session_state["captured_text"] = str(result.get("GET_TEXT"))
 
-current_text = st.session_state.get("recognized_voice_text", "")
+# ------------------------------------------------------------
+# PANEL INTEGRADO DE TRADUCCIÓN Y REPRODUCCIÓN (SIN SIDEBAR)
+# ------------------------------------------------------------
+c_left, c_right = st.columns([1.1, 1], gap="large")
 
-if current_text:
-    st.markdown(f'<div class="trans-result-card"><b>Texto transcrito:</b> {current_text}</div>', unsafe_allow_html=True)
-    os.makedirs("temp", exist_ok=True)
-    translator = Translator()
+with c_left:
+    st.markdown("### 1. Texto detectado")
+    texto_actual = st.text_area(
+        "Transcripción editable:",
+        value=st.session_state.get("captured_text", ""),
+        placeholder="Presiona 'Iniciar grabación de voz' o escribe directamente aquí el texto...",
+        height=140
+    )
 
-    col_l1, col_l2, col_l3 = st.columns(3)
+with c_right:
+    st.markdown("### 2. Configuración de destino")
+    col_l1, col_l2 = st.columns(2)
     with col_l1:
         in_lang = st.selectbox(
-            "Idioma de entrada:",
+            "Idioma de origen:",
             ("Español", "Inglés", "Bengali", "Coreano", "Mandarín", "Japonés", "Ruso", "Alemán"),
             index=0
         )
     with col_l2:
         out_lang = st.selectbox(
-            "Idioma de destino:",
+            "Idioma a traducir:",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Ruso", "Alemán"),
             index=0
         )
-    with col_l3:
-        english_accent = st.selectbox(
-            "Acento del sintetizador:",
-            ("Defecto", "Español", "Reino Unido", "Estados Unidos", "Canada", "Australia", "Irlanda", "Sudáfrica")
-        )
+
+    english_accent = st.selectbox(
+        "Acento del sintetizador de voz:",
+        ("Defecto", "Español", "Reino Unido", "Estados Unidos", "Canada", "Australia", "Irlanda", "Sudáfrica")
+    )
 
     lang_map = {
         "Inglés": "en", "Español": "es", "Bengali": "bn", "Coreano": "ko",
@@ -384,31 +436,33 @@ if current_text:
     output_language = lang_map.get(out_lang, "en")
     tld = accent_map.get(english_accent, "com")
 
-    display_output_text = st.checkbox("Mostrar texto traducido", value=True)
+    traducir_btn = st.button("Convertir y reproducir audio traducido", use_container_width=True)
 
-    if st.button("Convertir y reproducir audio", use_container_width=True):
-        with st.spinner("Traduciendo y sintetizando audio..."):
+if traducir_btn:
+    if not texto_actual.strip():
+        st.warning("Primero debes capturar voz o ingresar texto en el panel izquierdo.")
+    else:
+        with st.spinner("Traduciendo y generando audio..."):
             try:
-                translation = translator.translate(current_text, src=input_language, dest=output_language)
+                os.makedirs("temp", exist_ok=True)
+                translator = Translator()
+                translation = translator.translate(texto_actual, src=input_language, dest=output_language)
                 trans_text = translation.text
+
                 tts = gTTS(trans_text, lang=output_language, tld=tld, slow=False)
-                
-                safe_name = "".join(c for c in current_text[:20] if c.isalnum() or c in (" ", "_")).strip() or "audio"
-                file_path = f"temp/{safe_name}.mp3"
+                safe_name = "".join(c for c in texto_actual[:20] if c.isalnum() or c in (" ", "_")).strip() or "audio"
+                file_path = f"temp/{safe_name}_{int(time.time())}.mp3"
                 tts.save(file_path)
 
+                st.markdown(f'<div class="trans-card"><b>Traducción ({out_lang}):</b> {trans_text}</div>', unsafe_allow_html=True)
+
                 with open(file_path, "rb") as af:
-                    audio_bytes = af.read()
+                    st.audio(af.read(), format="audio/mp3", start_time=0)
 
-                st.markdown("### Audio traducido:")
-                st.audio(audio_bytes, format="audio/mp3", start_time=0)
-
-                if display_output_text:
-                    st.markdown(f'<div class="trans-result-card"><b>Traducción:</b> {trans_text}</div>', unsafe_allow_html=True)
             except Exception as e:
-                st.error(f"Error durante la traducción o síntesis: {e}")
+                st.error(f"Error durante el proceso de traducción o síntesis: {e}")
 
-def remove_files(days):
+def limpiar_archivos_antiguos(days=7):
     for f in glob.glob("temp/*.mp3"):
         if os.stat(f).st_mtime < time.time() - (days * 86400):
             try:
@@ -416,4 +470,4 @@ def remove_files(days):
             except Exception:
                 pass
 
-remove_files(7)
+limpiar_archivos_antiguos()
